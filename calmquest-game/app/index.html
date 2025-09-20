@@ -5,9 +5,8 @@
 <title>CalmQuest2D</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
 <style>
-body { margin: 0; padding: 0; overflow: hidden; font-family: sans-serif; background: #ecfeff; display: flex; justify-content: center; align-items: center; }
-#game-container { position: relative; }
-.game-button { cursor:pointer; }
+    body { margin: 0; padding: 0; overflow: hidden; background: #ecfeff; }
+    #game-container { width: 100vw; height: 100vh; }
 </style>
 </head>
 <body>
@@ -18,14 +17,23 @@ body { margin: 0; padding: 0; overflow: hidden; font-family: sans-serif; backgro
 class MainMenu extends Phaser.Scene {
     constructor(){ super({key:'MainMenu'});}
     create(){
-        this.add.text(400,100,'CalmQuest',{ fontSize:'48px', color:'#164e63' }).setOrigin(0.5);
+        this.add.text(this.scale.width/2,100,'CalmQuest',{ fontSize:'6vw', color:'#164e63' }).setOrigin(0.5);
 
-        this.createButton(400,220,'Memory Match','#164e63',()=>this.scene.start('MemoryMatch'));
-        this.createButton(400,300,'Breathing Game','#ec4899',()=>this.scene.start('BreathingGame'));
-        this.createButton(400,380,'Emotion Game','#164e63',()=>this.scene.start('EmotionGame'));
+        this.createButton(this.scale.width/2,220,'Memory Match','#164e63',()=>this.scene.start('MemoryMatch'));
+        this.createButton(this.scale.width/2,300,'Breathing Game','#ec4899',()=>this.scene.start('BreathingGame'));
+        this.createButton(this.scale.width/2,380,'Emotion Game','#164e63',()=>this.scene.start('EmotionGame'));
+
+        // Fullscreen button for mobile
+        let fsBtn=this.add.text(this.scale.width-20,20,'⛶',{fontSize:'24px',color:'#164e63'})
+            .setOrigin(1,0).setInteractive({useHandCursor:true});
+        fsBtn.on('pointerdown',()=>{
+            if(this.scale.isFullscreen){ this.scale.stopFullscreen(); }
+            else { this.scale.startFullscreen(); }
+        });
     }
     createButton(x,y,text,color,callback){
-        let btn=this.add.text(x,y,text,{ fontSize:'28px', color:'#fff', backgroundColor:color, padding:{x:20,y:10} }).setOrigin(0.5).setInteractive();
+        let btn=this.add.text(x,y,text,{ fontSize:'5vw', color:'#fff', backgroundColor:color, padding:{x:25,y:15} })
+            .setOrigin(0.5).setInteractive({useHandCursor:true});
         btn.on('pointerdown',callback);
         btn.on('pointerover',()=>btn.setScale(1.05));
         btn.on('pointerout',()=>btn.setScale(1));
@@ -37,50 +45,42 @@ class MemoryMatch extends Phaser.Scene {
     constructor(){ super({key:'MemoryMatch'});}
     create(){
         this.addBackButton();
-
         this.icons=['red','green','blue','yellow'];
         this.cards=[]; this.firstCard=null; this.secondCard=null; this.canClick=true; this.matchesFound=0;
 
         let cardKeys=this.icons.concat(this.icons);
         Phaser.Utils.Array.Shuffle(cardKeys);
 
+        let cols=4, rows=2;
+        let spacingX=this.scale.width/(cols+1);
+        let spacingY=this.scale.height/(rows+2);
+
         for(let i=0;i<cardKeys.length;i++){
-            let x=200+(i%4)*120;
-            let y=150+Math.floor(i/4)*140;
+            let x=spacingX*(1+(i%cols));
+            let y=spacingY*(1+Math.floor(i/cols));
             let rect=this.add.rectangle(x,y,100,100,0xaaaaaa).setInteractive();
-            rect.iconKey=cardKeys[i];
-            rect.revealed=false;
+            rect.iconKey=cardKeys[i]; rect.revealed=false;
 
             rect.on('pointerdown',()=>{
                 if(!this.canClick||rect.revealed) return;
-                rect.fillColor=this.getColor(rect.iconKey);
-                rect.revealed=true;
-
+                rect.fillColor=this.getColor(rect.iconKey); rect.revealed=true;
                 if(!this.firstCard) this.firstCard=rect;
                 else{
                     this.secondCard=rect; this.canClick=false;
                     this.time.delayedCall(1000,()=>this.checkMatch(),[],this);
                 }
             });
-
             this.cards.push(rect);
         }
     }
-
     getColor(key){
-        switch(key){
-            case 'red': return 0xff0000;
-            case 'green': return 0x00ff00;
-            case 'blue': return 0x0000ff;
-            case 'yellow': return 0xffff00;
-        }
+        switch(key){ case 'red':return 0xff0000; case 'green':return 0x00ff00; case 'blue':return 0x0000ff; case 'yellow':return 0xffff00; }
     }
-
     checkMatch(){
         if(this.firstCard.iconKey===this.secondCard.iconKey){
             this.matchesFound++;
             if(this.matchesFound===this.icons.length){
-                this.add.text(400,500,'Congratulations! 🎉',{fontSize:'32px',color:'#164e63'}).setOrigin(0.5);
+                this.add.text(this.scale.width/2,this.scale.height-80,'Congratulations! 🎉',{fontSize:'5vw',color:'#164e63'}).setOrigin(0.5);
                 this.time.delayedCall(2000,()=>this.scene.start('MainMenu'),[],this);
             }
         } else {
@@ -89,9 +89,8 @@ class MemoryMatch extends Phaser.Scene {
         }
         this.firstCard=null; this.secondCard=null; this.canClick=true;
     }
-
     addBackButton(){
-        let btn=this.add.text(20,20,'← Back',{fontSize:'20px',color:'#164e63'}).setInteractive();
+        let btn=this.add.text(20,20,'← Back',{fontSize:'4vw',color:'#164e63'}).setInteractive();
         btn.on('pointerdown',()=>this.scene.start('MainMenu'));
     }
 }
@@ -101,17 +100,15 @@ class BreathingGame extends Phaser.Scene {
     constructor(){ super({key:'BreathingGame'});}
     create(){
         this.addBackButton();
-        this.add.text(400,80,'Breathing Exercise',{ fontSize:'36px', color:'#164e63' }).setOrigin(0.5);
+        this.add.text(this.scale.width/2,80,'Breathing Exercise',{ fontSize:'6vw', color:'#164e63' }).setOrigin(0.5);
 
-        this.circle=this.add.circle(400,300,50,0x164e63);
+        this.circle=this.add.circle(this.scale.width/2,this.scale.height/2,50,0x164e63);
         this.phases=['Inhale','Hold','Exhale']; this.phase=0;
-        this.label=this.add.text(400,480,'',{fontSize:'28px',color:'#164e63'}).setOrigin(0.5);
+        this.label=this.add.text(this.scale.width/2,this.scale.height-120,'',{fontSize:'6vw',color:'#164e63'}).setOrigin(0.5);
         this.breathCount=0;
-        this.countLabel=this.add.text(400,520,'',{fontSize:'16px',color:'#475569'}).setOrigin(0.5);
-
+        this.countLabel=this.add.text(this.scale.width/2,this.scale.height-80,'',{fontSize:'4vw',color:'#475569'}).setOrigin(0.5);
         this.nextPhase();
     }
-
     nextPhase(){
         this.label.setText(this.phases[this.phase]);
         if(this.phases[this.phase]==='Inhale'){
@@ -122,102 +119,80 @@ class BreathingGame extends Phaser.Scene {
             this.tweens.add({targets:this.circle,scale:1,duration:2000,onComplete:()=>this.nextPhaseStep()});
         }
     }
-
     nextPhaseStep(){
         this.phase=(this.phase+1)%this.phases.length;
         if(this.phase===0){ this.breathCount++; this.countLabel.setText(`Breath cycles: ${this.breathCount}`);}
         this.nextPhase();
     }
-
     addBackButton(){
-        let btn=this.add.text(20,20,'← Back',{fontSize:'20px',color:'#164e63'}).setInteractive();
+        let btn=this.add.text(20,20,'← Back',{fontSize:'4vw',color:'#164e63'}).setInteractive();
         btn.on('pointerdown',()=>this.scene.start('MainMenu'));
     }
 }
 
-// --- Emotion Game Scene ---
-// --- Emotion Game Scene ---
 // --- Emotion Game Scene ---
 class EmotionGame extends Phaser.Scene {
     constructor(){ super({key:'EmotionGame'});}
     create(){
         this.addBackButton();
-        this.add.text(400,60,'Emotion Recognition',{fontSize:'36px',color:'#164e63'}).setOrigin(0.5);
-        this.add.text(400,100,'Identify the emotion shown below',{fontSize:'16px',color:'#475569'}).setOrigin(0.5);
+        this.add.text(this.scale.width/2,60,'Emotion Recognition',{fontSize:'6vw',color:'#164e63'}).setOrigin(0.5);
+        this.add.text(this.scale.width/2,100,'Identify the emotion',{fontSize:'4vw',color:'#475569'}).setOrigin(0.5);
 
-        // Emoji + text pairs
-        this.emotions = [
-            {emoji:'😊', name:'Happy'},
-            {emoji:'😢', name:'Sad'},
-            {emoji:'😡', name:'Angry'},
-            {emoji:'😌', name:'Calm'}
-        ];
+        this.emotions=[{emoji:'😊',name:'Happy'},{emoji:'😢',name:'Sad'},{emoji:'😡',name:'Angry'},{emoji:'😌',name:'Calm'}];
+        this.correctEmotion=null; this.buttons=[]; this.score=0;
+        this.emotionIcon=this.add.text(this.scale.width/2,this.scale.height/2-100,'😊',{fontSize:'15vw'}).setOrigin(0.5);
 
-        this.correctEmotion=null;
-        this.buttons=[];
-        this.score=0;
-
-        // Display emoji in the middle
-        this.emotionIcon=this.add.text(400,200,'😊',{fontSize:'72px'}).setOrigin(0.5);
-
-        // Create 3 text-based answer buttons
         for(let i=0;i<3;i++){
-            let btn=this.add.text(200+i*200,350,'',{fontSize:'24px',color:'#fff',backgroundColor:'#164e63',padding:{x:20,y:10}})
-                .setOrigin(0.5)
-                .setInteractive({useHandCursor:true});
-            
+            let btn=this.add.text(this.scale.width/4*(i+1),this.scale.height/2+80,'',{fontSize:'5vw',color:'#fff',backgroundColor:'#164e63',padding:{x:25,y:15}})
+                .setOrigin(0.5).setInteractive({useHandCursor:true});
             btn.on('pointerover',()=>btn.setBackgroundColor('#0d9488'));
             btn.on('pointerout',()=>btn.setBackgroundColor('#164e63'));
             btn.on('pointerdown',()=>this.checkAnswer(btn.text));
-            
             this.buttons.push(btn);
         }
 
-        this.statusLabel=this.add.text(400,450,'',{fontSize:'24px',color:'#164e63'}).setOrigin(0.5);
-        this.scoreLabel=this.add.text(400,500,'Score: 0',{fontSize:'18px',color:'#475569'}).setOrigin(0.5);
-
+        this.statusLabel=this.add.text(this.scale.width/2,this.scale.height-140,'',{fontSize:'5vw',color:'#164e63'}).setOrigin(0.5);
+        this.scoreLabel=this.add.text(this.scale.width/2,this.scale.height-80,'Score: 0',{fontSize:'4vw',color:'#475569'}).setOrigin(0.5);
         this.newRound();
     }
-
     newRound(){
-        // Shuffle and pick correct emotion
         Phaser.Utils.Array.Shuffle(this.emotions);
         this.correctEmotion=this.emotions[0];
         this.emotionIcon.setText(this.correctEmotion.emoji);
-
-        // Pick 3 options (including correct one)
-        let options=[this.correctEmotion, ...Phaser.Utils.Array.Shuffle(this.emotions.slice(1)).slice(0,2)];
+        let options=[this.correctEmotion,...Phaser.Utils.Array.Shuffle(this.emotions.slice(1)).slice(0,2)];
         Phaser.Utils.Array.Shuffle(options);
-
         for(let i=0;i<3;i++) this.buttons[i].setText(options[i].name);
         this.statusLabel.setText('');
     }
-
     checkAnswer(selected){
         if(selected===this.correctEmotion.name){
-            this.score++;
-            this.statusLabel.setText('Correct! ✨');
-            this.statusLabel.setColor('#164e63');
+            this.score++; this.statusLabel.setText('Correct! ✨').setColor('#164e63');
             this.scoreLabel.setText(`Score: ${this.score}`);
             this.time.delayedCall(1200,()=>this.newRound(),[],this);
         } else {
-            this.statusLabel.setText('Try again! 🤔');
-            this.statusLabel.setColor('#ef4444');
+            this.statusLabel.setText('Try again! 🤔').setColor('#ef4444');
         }
     }
-
     addBackButton(){
-        let btn=this.add.text(20,20,'← Back',{fontSize:'20px',color:'#475569'}).setInteractive({useHandCursor:true});
-        btn.on('pointerover',()=>btn.setColor('#164e63'));
-        btn.on('pointerout',()=>btn.setColor('#475569'));
+        let btn=this.add.text(20,20,'← Back',{fontSize:'4vw',color:'#475569'}).setInteractive();
         btn.on('pointerdown',()=>this.scene.start('MainMenu'));
     }
 }
 
-
-// --- Phaser Game Config ---
-var config={type:Phaser.AUTO,width:800,height:600,backgroundColor:"#ffffff",parent:"game-container",scene:[MainMenu,MemoryMatch,BreathingGame,EmotionGame]};
-window.onload = ()=>{ var game=new Phaser.Game(config); };
+// --- Phaser Config (responsive) ---
+var config={
+    type:Phaser.AUTO,
+    parent:"game-container",
+    scale:{
+        mode:Phaser.Scale.FIT,
+        autoCenter:Phaser.Scale.CENTER_BOTH,
+        width:800,
+        height:600
+    },
+    backgroundColor:"#ffffff",
+    scene:[MainMenu,MemoryMatch,BreathingGame,EmotionGame]
+};
+window.onload=()=>{ new Phaser.Game(config); };
 </script>
 </body>
 </html>
