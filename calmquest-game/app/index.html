@@ -18,7 +18,7 @@ body { margin: 0; padding: 0; overflow: hidden; font-family: sans-serif; backgro
 class MainMenu extends Phaser.Scene {
     constructor(){ super({key:'MainMenu'});}
     create(){
-        this.add.text(400,100,'CalmQuestf',{ fontSize:'48px', color:'#164e63' }).setOrigin(0.5);
+        this.add.text(400,100,'CalmQuest',{ fontSize:'48px', color:'#164e63' }).setOrigin(0.5);
 
         this.createButton(400,220,'Memory Match','#164e63',()=>this.scene.start('MemoryMatch'));
         this.createButton(400,300,'Breathing Game','#ec4899',()=>this.scene.start('BreathingGame'));
