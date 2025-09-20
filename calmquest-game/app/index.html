@@ -14,13 +14,13 @@
 var config = {
     type: Phaser.AUTO,
     scale: {
-        mode: Phaser.Scale.FIT,       // ✅ Fit to any screen
+        mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
         width: 800,
         height: 600
     },
     backgroundColor: "#ffffff",
-    scene: [MainMenu, MemoryMatch, BreathingGame, EmotionGame]
+    scene: [MainMenu, EmotionGame]
 };
 
 var game = new Phaser.Game(config);
@@ -29,102 +29,12 @@ var game = new Phaser.Game(config);
 class MainMenu extends Phaser.Scene {
     constructor() { super({ key: 'MainMenu' }); }
     create() {
-        this.add.text(400, 100, 'CalmQuest2D', { fontSize: '48px', color: '#000' }).setOrigin(0.5);
-        
-        const memoryBtn = this.add.text(400, 220, '🃏 Memory Match', { fontSize: '32px', color: '#000' })
+        this.add.text(400, 150, 'CalmQuest2D', { fontSize: '48px', color: '#000' }).setOrigin(0.5);
+
+        const btn = this.add.text(400, 300, '😊 Emotion Game', { fontSize: '32px', color: '#000', backgroundColor: '#ddd' })
             .setOrigin(0.5).setInteractive();
-        memoryBtn.on('pointerdown', () => { this.scene.start('MemoryMatch'); });
-
-        const breathingBtn = this.add.text(400, 320, '🌬️ Breathing Game', { fontSize: '32px', color: '#000' })
-            .setOrigin(0.5).setInteractive();
-        breathingBtn.on('pointerdown', () => { this.scene.start('BreathingGame'); });
-
-        const emotionBtn = this.add.text(400, 420, '😊 Emotion Game', { fontSize: '32px', color: '#000' })
-            .setOrigin(0.5).setInteractive();
-        emotionBtn.on('pointerdown', () => { this.scene.start('EmotionGame'); });
+        btn.on('pointerdown', () => this.scene.start('EmotionGame'));
     }
-}
-
-// --- Memory Match Scene ---
-class MemoryMatch extends Phaser.Scene {
-    constructor() { super({ key: 'MemoryMatch' }); }
-    preload() {
-        this.load.image('square', 'assets/square_green.png');
-        this.load.image('circle', 'assets/circle_red.png');
-        this.load.image('triangle', 'assets/triangle_blue.png');
-        this.load.image('star', 'assets/star_yellow.png');
-        this.load.image('back', 'assets/back.png');
-    }
-    create() {
-        this.icons = ['square', 'circle', 'triangle', 'star'];
-        this.cards = [];
-        this.firstCard = null;
-        this.secondCard = null;
-        this.canClick = true;
-        this.matchesFound = 0;
-
-        let cardKeys = this.icons.concat(this.icons);
-        Phaser.Utils.Array.Shuffle(cardKeys);
-
-        // Grid placement with spacing
-        for (let i = 0; i < cardKeys.length; i++) {
-            let x = 200 + (i % 4) * 140; // ✅ more spacing
-            let y = 180 + Math.floor(i / 4) * 220;
-            let card = this.add.sprite(x, y, 'back').setInteractive().setScale(0.8);
-            card.icon = cardKeys[i];
-            card.revealed = false;
-            card.on('pointerdown', () => this.flipCard(card));
-            this.cards.push(card);
-        }
-    }
-    flipCard(card) {
-        if (!this.canClick || card.revealed) return;
-        card.setTexture(card.icon);
-        card.revealed = true;
-        if (!this.firstCard) this.firstCard = card;
-        else {
-            this.secondCard = card;
-            this.canClick = false;
-            this.time.delayedCall(1000, () => this.checkMatch(), [], this);
-        }
-    }
-    checkMatch() {
-        if (this.firstCard.icon === this.secondCard.icon) {
-            this.matchesFound++;
-            if (this.matchesFound === this.icons.length) {
-                alert('🎉 Congratulations! You matched all pairs!');
-                this.scene.start('MainMenu');
-            }
-        } else {
-            this.firstCard.setTexture('back'); this.firstCard.revealed = false;
-            this.secondCard.setTexture('back'); this.secondCard.revealed = false;
-        }
-        this.firstCard = null; this.secondCard = null; this.canClick = true;
-    }
-}
-
-// --- Breathing Game Scene ---
-class BreathingGame extends Phaser.Scene {
-    constructor() { super({ key: 'BreathingGame' }); }
-    preload() { this.load.image('circle', 'assets/circle_red.png'); }
-    create() {
-        this.circle = this.add.sprite(400, 300, 'circle').setScale(1);
-        this.phases = ['Inhale', 'Hold', 'Exhale'];
-        this.phase = 0;
-        this.label = this.add.text(400, 500, '', { fontSize: '32px', color: '#000' }).setOrigin(0.5);
-        this.nextPhase();
-    }
-    nextPhase() {
-        this.label.setText(this.phases[this.phase]);
-        if (this.phases[this.phase] === 'Inhale') {
-            this.tweens.add({ targets: this.circle, scale: 1.5, duration: 2000, onComplete: () => this.nextPhaseStep() });
-        } else if (this.phases[this.phase] === 'Hold') {
-            this.time.delayedCall(1000, () => this.nextPhaseStep(), [], this);
-        } else {
-            this.tweens.add({ targets: this.circle, scale: 1, duration: 2000, onComplete: () => this.nextPhaseStep() });
-        }
-    }
-    nextPhaseStep() { this.phase = (this.phase + 1) % this.phases.length; this.nextPhase(); }
 }
 
 // --- Emotion Game Scene ---
@@ -137,19 +47,27 @@ class EmotionGame extends Phaser.Scene {
             {emoji: '😡', name: 'Angry'},
             {emoji: '😌', name: 'Calm'}
         ];
-        this.correctEmotion = '';
+        this.correctEmotion = {};
         this.buttons = [];
+
         this.emotionIcon = this.add.text(400, 200, '', { fontSize: '100px' }).setOrigin(0.5);
 
         for (let i=0; i<3; i++) {
-            let btn = this.add.text(200+i*200, 400, '', {fontSize:'32px', color:'#000', backgroundColor:'#ddd', padding:{x:10,y:5}})
-                .setOrigin(0.5).setInteractive();
+            let btn = this.add.text(200+i*200, 400, '', {
+                fontSize:'28px',
+                color:'#000',
+                backgroundColor:'#eee',
+                padding:{x:10,y:5}
+            }).setOrigin(0.5).setInteractive();
+
             btn.on('pointerdown', () => this.checkAnswer(btn.text));
             this.buttons.push(btn);
         }
-        this.statusLabel = this.add.text(400, 520, '', {fontSize:'28px', color:'#000'}).setOrigin(0.5);
+
+        this.statusLabel = this.add.text(400, 520, '', {fontSize:'24px', color:'#000'}).setOrigin(0.5);
         this.newRound();
     }
+
     newRound() {
         Phaser.Utils.Array.Shuffle(this.emotions);
         this.correctEmotion = this.emotions[0];
@@ -158,12 +76,14 @@ class EmotionGame extends Phaser.Scene {
         let options = this.emotions.slice(0,3);
         Phaser.Utils.Array.Shuffle(options);
         for (let i=0;i<3;i++) this.buttons[i].setText(options[i].name);
+
         this.statusLabel.setText('Identify the emotion shown');
     }
+
     checkAnswer(selected) {
         if (selected === this.correctEmotion.name) {
             this.statusLabel.setText('✅ Correct!');
-            this.time.delayedCall(1000, () => this.newRound(), [], this);
+            this.time.delayedCall(1000, () => this.newRound());
         } else {
             this.statusLabel.setText('❌ Try again!');
         }
